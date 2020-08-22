@@ -1,4 +1,4 @@
-package main
+package repl
 
 import (
 	"testing"
@@ -25,7 +25,7 @@ const (
 )
 
 func TestLexFibCode(t *testing.T) {
-	value := lex(FibCode)
+	value := Lex(FibCode)
 	assert.Equal(
 		t,
 		[]string{
@@ -45,7 +45,7 @@ func TestLexFibCode(t *testing.T) {
 }
 
 func TestLexStringStuff(t *testing.T) {
-	value := lex(StringCode)
+	value := Lex(StringCode)
 	assert.Equal(
 		t,
 		[]string{
@@ -58,7 +58,7 @@ func TestLexStringStuff(t *testing.T) {
 }
 
 func TestLexEscapedString(t *testing.T) {
-	value := lex(EscapedString)
+	value := Lex(EscapedString)
 	assert.Equal(
 		t,
 		[]string{
@@ -69,7 +69,7 @@ func TestLexEscapedString(t *testing.T) {
 }
 
 func TestParseString(t *testing.T) {
-	lisgValue, err := parse([]string{"\"hello\""})
+	lisgValue, err := Parse([]string{"\"hello\""})
 	require.NoError(t, err)
 
 	lisgString, ok := lisgValue.(LisgString)
@@ -85,7 +85,7 @@ func TestParseNumbers(t *testing.T) {
 	}
 
 	for i, numberString := range numberStrings {
-		lisgValue, err := parse([]string{numberString})
+		lisgValue, err := Parse([]string{numberString})
 		require.NoError(t, err)
 
 		lisgNumber, ok := lisgValue.(LisgNumber)
@@ -95,7 +95,7 @@ func TestParseNumbers(t *testing.T) {
 }
 
 func TestParseSymbol(t *testing.T) {
-	lisgValue, err := parse([]string{"symbol-name"})
+	lisgValue, err := Parse([]string{"symbol-name"})
 	require.NoError(t, err)
 
 	lisgSymbol, ok := lisgValue.(LisgSymbol)
@@ -104,7 +104,7 @@ func TestParseSymbol(t *testing.T) {
 }
 
 func TestParseSimpleList(t *testing.T) {
-	lisgValue, err := parse([]string{
+	lisgValue, err := Parse([]string{
 		"(",
 		"string-append",
 		"\"hello\"",
@@ -134,9 +134,9 @@ func TestParseSimpleList(t *testing.T) {
 }
 
 func TestLexParseEmbedded(t *testing.T) {
-	symbols := lex(StringCode)
+	symbols := Lex(StringCode)
 
-	lisgValue, err := parse(symbols)
+	lisgValue, err := Parse(symbols)
 	require.NoError(t, err)
 
 	lisgList, ok := lisgValue.(LisgList)

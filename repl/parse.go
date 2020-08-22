@@ -1,4 +1,4 @@
-package main
+package repl
 
 import "strconv"
 
@@ -6,7 +6,7 @@ func isSpace(c byte) bool {
 	return c == ' ' || c == '\r' || c == '\n'
 }
 
-func lex(s string) []string {
+func Lex(s string) []string {
 	tokens := []string{}
 
 	startPos := -1
@@ -55,7 +55,7 @@ func lex(s string) []string {
 	return tokens
 }
 
-func parse(ss []string) (LisgValue, error) {
+func Parse(ss []string) (LisgValue, error) {
 	head := ss[0]
 
 	if head[0] == '"' && head[len(head) - 1] == '"' {
@@ -90,7 +90,7 @@ func parse(ss []string) (LisgValue, error) {
 
 		children := make([]LisgValue, len(ranges))
 		for i, r := range ranges {
-			child, err := parse(ss[r[0]:r[1]])
+			child, err := Parse(ss[r[0]:r[1]])
 			if err != nil {
 				return nil, err
 			}
