@@ -17,7 +17,3 @@ type LisgNumber struct {
 type LisgList struct {
 	children []LisgValue
 }
-
-type LisgContext struct {
-	mapping map[LisgSymbol]LisgValue
-}

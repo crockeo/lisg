@@ -1,5 +1,7 @@
 package main
 
+import "strconv"
+
 func isSpace(c byte) bool {
 	return c == ' ' || c == '\r' || c == '\n'
 }
@@ -53,5 +55,51 @@ func lex(s string) []string {
 	return tokens
 }
 
-func parse(ss []string) {
+func parse(ss []string) (LisgValue, error) {
+	head := ss[0]
+
+	if head[0] == '"' && head[len(head) - 1] == '"' {
+		return LisgString{
+			value: head[1:len(head) - 1],
+		}, nil
+	} else if value, err := strconv.ParseFloat(head, 64); err == nil {
+		return LisgNumber{
+			value: value,
+		}, nil
+	} else if head == "(" {
+		var rangeStart int
+		depth := 0
+
+		ranges := [][]int{}
+		for i, item := range ss {
+			if item == "(" {
+				depth += 1
+				if depth == 2 {
+					rangeStart = i
+				}
+			} else if item == ")" {
+				depth -= 1
+				if depth == 1 {
+					ranges = append(ranges, []int{rangeStart, i + 1})
+				}
+			} else if depth == 1 {
+				// top-level expressions in the list
+				ranges = append(ranges, []int{i, i + 1})
+			}
+		}
+
+		children := make([]LisgValue, len(ranges))
+		for i, r := range ranges {
+			child, err := parse(ss[r[0]:r[1]])
+			if err != nil {
+				return nil, err
+			}
+			children[i] = child
+		}
+		return LisgList{children: children}, nil
+	} else {
+		return LisgSymbol{
+			value: head,
+		}, nil
+	}
 }
