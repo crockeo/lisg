@@ -30,3 +30,20 @@ func (c *LisgContext) SetValue(symbol LisgSymbol, value LisgValue) (LisgValue, e
 
 	return nil, fmt.Errorf("setting non-existant symbol %s", symbol)
 }
+
+// PushContext pushes a new context onto the stack of contexts.
+func (c *LisgContext) PushContext(bindings map[LisgSymbol]LisgValue) (*LisgContext, error) {
+	return &LisgContext{
+		bindings: bindings,
+		parentCtx: c,
+	}, nil
+}
+
+// PopContext pops a context from the stack of contexts.
+func (c *LisgContext) PopContext() (*LisgContext, error) {
+	if c.parentCtx == nil {
+		return nil, fmt.Errorf("attempting to pop to nil context")
+	}
+
+	return c.parentCtx, nil
+}
