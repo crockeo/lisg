@@ -2,20 +2,19 @@ package repl
 
 import "fmt"
 
-var (
-)
-
-func getBuiltin(name string) (LisgFunction, bool) {
-	builtin, ok := map[string]LisgFunction{
+func getBuiltin(name string) (LisgBuiltin, bool) {
+	builtin, ok := map[string]LisgBuiltin{
 		"eval":   eval,
 		"defvar": defvar,
-		"let":    let,
-		"car":    car,
-		"cdr":    cdr,
-		"+":      add,
-		"*":      mul,
-		"-":      sub,
-		"/":      div,
+		"lambda": lambda,
+		"funcall": funcall,
+		// TODO: write these shorthands?
+		// "defun": defun,
+		// "apply": apply,
+		"+": add,
+		"*": mul,
+		"-": sub,
+		"/": div,
 	}[name]
 	return builtin, ok
 }
@@ -33,28 +32,10 @@ func eval(global, local *LisgContext, value LisgValue) (LisgValue, error) {
 		}
 
 		if builtin, ok := getBuiltin(headSymbol.value); ok {
-			return builtin(global, local, LisgList{children:list.children[1:]})
+			return builtin(global, local, LisgList{children: list.children[1:]})
 		}
 
-		_, err := eval(global, local, headSymbol)
-		if err != nil {
-			return nil, err
-		}
-
-		// TODO: use this when we call functions
-		// evaluatedBody := LisgList{children: make([]LisgValue, len(list.children) - 1)}
-		// for i, child := range list.children[1:] {
-		// 	evaluatedChild, err := eval(global, local, child)
-		// 	if err != nil {
-		// 		return nil, err
-		// 	}
-		// 	evaluatedBody.children[i] = evaluatedChild
-		// }
-
-		// TODO: try to convert headValue to a function once that exists
-
-
-		return nil, nil
+		return funcall(global, local, list)
 	} else if symbol, ok := value.(LisgSymbol); ok {
 		return local.GetValue(symbol)
 	} else {
@@ -90,16 +71,83 @@ func defvar(global, local *LisgContext, value LisgValue) (LisgValue, error) {
 	return newValue, nil
 }
 
-func let(global, local *LisgContext, value LisgValue) (LisgValue, error) {
-	return nil, fmt.Errorf("let unimplemented")
+func lambda(global, local *LisgContext, value LisgValue) (LisgValue, error) {
+	args, ok := value.(LisgList)
+	if !ok {
+		return nil, fmt.Errorf("lambda passed value %s that is not an argument list", value)
+	}
+
+	if len(args.children) < 2 {
+		return nil, fmt.Errorf("insufficient args passed to lambda: %s", args)
+	}
+
+	argList, ok := args.children[0].(LisgList)
+	if !ok {
+		return nil, fmt.Errorf("") // TODO
+	}
+
+	fnArgs := make([]LisgSymbol, len(argList.children))
+	for i, arg := range argList.children {
+		symbol, ok := arg.(LisgSymbol)
+		if !ok {
+			return nil, fmt.Errorf("asdf") // TODO
+		}
+		fnArgs[i] = symbol
+	}
+
+	fnBody := make([]LisgValue, len(args.children)-1)
+	for i, body := range args.children[1:] {
+		fnBody[i] = body
+	}
+
+	return LisgFunction{
+		args: fnArgs,
+		body: fnBody,
+	}, nil
 }
 
-func car(global, local *LisgContext, value LisgValue) (LisgValue, error) {
-	return nil, fmt.Errorf("car unimplemented")
-}
+func funcall(global, local *LisgContext, value LisgValue) (LisgValue, error) {
+	args, ok := value.(LisgList)
+	if !ok {
+		return nil, fmt.Errorf("funcall passed value %s that is not an argument list", value)
+	}
 
-func cdr(global, local *LisgContext, value LisgValue) (LisgValue, error) {
-	return nil, fmt.Errorf("cdr unimplemented")
+	if len(args.children) < 1 {
+		return nil, fmt.Errorf("insufficient args passed to funcall: %s", args)
+	}
+
+	head, err := eval(global, local, args.children[0])
+	if err != nil {
+		return nil, err
+	}
+	fn, ok := head.(LisgFunction)
+	if !ok {
+		return nil, fmt.Errorf("calling uncallable: %s", args.children[0])
+	}
+
+	if len(args.children) - 1 != len(fn.args) {
+		return nil, fmt.Errorf("arg count mismatch, %d != %d", len(args.children) - 1, len(fn.args))
+	}
+
+	bindings := map[LisgSymbol]LisgValue{}
+	for i := range args.children[1:] {
+		bindings[fn.args[i]] = args.children[i + 1]
+	}
+
+	fnContext, err := local.PushContext(bindings)
+	if err != nil {
+		return nil, err
+	}
+
+	var retVal LisgValue = LisgList{children: []LisgValue{}}
+	for _, value := range fn.body {
+		retVal, err = eval(global, fnContext, value)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return retVal, nil
 }
 
 func add(global, local *LisgContext, value LisgValue) (LisgValue, error) {

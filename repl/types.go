@@ -18,4 +18,9 @@ type LisgList struct {
 	children []LisgValue
 }
 
-type LisgFunction func(global, local *LisgContext, value LisgValue) (LisgValue, error)
+type LisgBuiltin func(global, local *LisgContext, value LisgValue) (LisgValue, error)
+
+type LisgFunction struct {
+	args []LisgSymbol
+	body []LisgValue
+}
