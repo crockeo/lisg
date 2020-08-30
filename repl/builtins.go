@@ -83,14 +83,14 @@ func lambda(global, local *LisgContext, value LisgValue) (LisgValue, error) {
 
 	argList, ok := args.children[0].(LisgList)
 	if !ok {
-		return nil, fmt.Errorf("") // TODO
+		return nil, fmt.Errorf("lambda args not list: %s", args.children[0])
 	}
 
 	fnArgs := make([]LisgSymbol, len(argList.children))
 	for i, arg := range argList.children {
 		symbol, ok := arg.(LisgSymbol)
 		if !ok {
-			return nil, fmt.Errorf("asdf") // TODO
+			return nil, fmt.Errorf("lambda arg not a symbol: %s", arg)
 		}
 		fnArgs[i] = symbol
 	}
