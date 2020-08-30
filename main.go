@@ -10,6 +10,8 @@ import (
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
+	context := repl.BaseContext()
+
 	for {
 		fmt.Print("> ")
 		text, err := reader.ReadString('\n')
@@ -26,7 +28,7 @@ func main() {
 			continue
 		}
 
-		result, err := repl.Eval(ast)
+		result, err := repl.Eval(context, context, ast)
 		if err != nil {
 			fmt.Printf("encountered error in evaluating: %s\n", err)
 		}

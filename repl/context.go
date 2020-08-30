@@ -7,6 +7,13 @@ type LisgContext struct {
 	parentCtx *LisgContext
 }
 
+func BaseContext() *LisgContext {
+	return &LisgContext{
+		bindings: map[LisgSymbol]LisgValue{},
+		parentCtx: nil,
+	}
+}
+
 // GetValue retrieves the value that a symbol maps onto, if it exists in the current or any parent
 // contexts.
 func (c *LisgContext) GetValue(symbol LisgSymbol) (LisgValue, error) {
@@ -23,12 +30,14 @@ func (c *LisgContext) GetValue(symbol LisgSymbol) (LisgValue, error) {
 
 // SetValue sets a symbol's value, if it exists in only the current context.
 func (c *LisgContext) SetValue(symbol LisgSymbol, value LisgValue) (LisgValue, error) {
-	if _, ok := c.bindings[symbol]; ok {
-		c.bindings[symbol] = value
-		return value, nil
-	}
+	c.bindings[symbol] = value
+	return value, nil
+	// if _, ok := c.bindings[symbol]; ok {
+	// 	c.bindings[symbol] = value
+	// 	return value, nil
+	// }
 
-	return nil, fmt.Errorf("setting non-existant symbol %s", symbol)
+	// return nil, fmt.Errorf("setting non-existant symbol %s", symbol)
 }
 
 // PushContext pushes a new context onto the stack of contexts.
